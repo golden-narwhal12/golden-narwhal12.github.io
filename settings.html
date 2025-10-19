@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Settings - Placeholder</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="settings-page">
+            <h2 class="settings-title">SETTINGS</h2>
+            
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span>Min Word Length</span>
+                    <span class="setting-value" id="minWordValue">4</span>
+                </div>
+                <input type="range" class="slider" id="minWordLength" min="3" max="7" value="4" 
+                       oninput="updateSettingValue('minWordValue', this.value)">
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span>Game Length</span>
+                    <span class="setting-value" id="gameLengthValue">5 min</span>
+                </div>
+                <input type="range" class="slider" id="gameLength" min="1" max="10" value="5" 
+                       oninput="updateSettingValue('gameLengthValue', this.value + ' min')">
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span>Starting Tiles</span>
+                    <span class="setting-value" id="startingTilesValue">12</span>
+                </div>
+                <input type="range" class="slider" id="startingTiles" min="8" max="20" value="12" 
+                       oninput="updateSettingValue('startingTilesValue', this.value)">
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span>Tile Addition Rate</span>
+                    <span class="setting-value" id="tileRateValue">5 sec</span>
+                </div>
+                <input type="range" class="slider" id="tileRate" min="2" max="10" value="5" 
+                       oninput="updateSettingValue('tileRateValue', this.value + ' sec')">
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span>Max Pool Size</span>
+                    <span class="setting-value" id="maxPoolValue">30</span>
+                </div>
+                <input type="range" class="slider" id="maxPool" min="20" max="50" value="30" 
+                       oninput="updateSettingValue('maxPoolValue', this.value)">
+            </div>
+
+            <div class="settings-buttons">
+                <a href="index.html" class="btn btn-secondary" onclick="saveSettings()">BACK</a>
+                <button class="btn" onclick="saveSettings()">START GAME</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load saved settings on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedSettings = JSON.parse(localStorage.getItem('gameSettings') || '{}');
+            
+            if (savedSettings.minWordLength) {
+                document.getElementById('minWordLength').value = savedSettings.minWordLength;
+                document.getElementById('minWordValue').textContent = savedSettings.minWordLength;
+            }
+            if (savedSettings.gameLength) {
+                document.getElementById('gameLength').value = savedSettings.gameLength;
+                document.getElementById('gameLengthValue').textContent = savedSettings.gameLength + ' min';
+            }
+            if (savedSettings.startingTiles) {
+                document.getElementById('startingTiles').value = savedSettings.startingTiles;
+                document.getElementById('startingTilesValue').textContent = savedSettings.startingTiles;
+            }
+            if (savedSettings.tileRate) {
+                document.getElementById('tileRate').value = savedSettings.tileRate;
+                document.getElementById('tileRateValue').textContent = savedSettings.tileRate + ' sec';
+            }
+            if (savedSettings.maxPool) {
+                document.getElementById('maxPool').value = savedSettings.maxPool;
+                document.getElementById('maxPoolValue').textContent = savedSettings.maxPool;
+            }
+        });
+
+        function updateSettingValue(id, value) {
+            document.getElementById(id).textContent = value;
+        }
+
+        function saveSettings() {
+            const settings = {
+                minWordLength: parseInt(document.getElementById('minWordLength').value),
+                gameLength: parseInt(document.getElementById('gameLength').value),
+                startingTiles: parseInt(document.getElementById('startingTiles').value),
+                tileRate: parseInt(document.getElementById('tileRate').value),
+                maxPool: parseInt(document.getElementById('maxPool').value)
+            };
+            
+            localStorage.setItem('gameSettings', JSON.stringify(settings));
+            window.location.href = 'game.html';
+        }
+    </script>
+</body>
+</html>
