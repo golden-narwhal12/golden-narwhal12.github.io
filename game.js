@@ -1,19 +1,4 @@
-// Update game timer
-function updateTimer() {
-    gameState.timeRemaining--;
-    
-    if (gameState.timeRemaining <= 0) {
-        endGame();
-        return;
-    }
-    
-    // Update overall game timer display
-    const minutes = Math.floor(gameState.timeRemaining / 60);
-    const seconds = gameState.timeRemaining % 60;
-    document.getElementById('timer').textContent = 
-        `${minutes}:${seconds.toString().padStart(2, '0')}`;
-
-}// Game state
+// Game state
 let gameState = {
     player1: {
         score: 0,
@@ -25,24 +10,26 @@ let gameState = {
         words: [],
         selectedTiles: []
     },
+    // default settings
+    settings: {
+        minWordLength: 3,
+        gameLength: 3,
+        startingTiles: 8,
+        tileRate: 30,
+        maxPool: 20,
+    },
     poolTiles: [],
     usedWords: new Set(),
-    timeRemaining: 300, // 5 minutes default
-    totalTime: 300,
+    timeRemaining: 0, 
+    totalTime: 0,
     gameActive: false,
     tileAddInterval: null,
     timerInterval: null,
     progressInterval: null, // Separate interval for progress bar
-    currentTileRate: 5000, // Start at 5 seconds
+    currentTileRate: 0,
     nextTileTime: 0, // Track when next tile will be added
     lastTileTime: 0, // Track when last tile was added
-    settings: {
-        minWordLength: 3,
-        gameLength: 4,
-        startingTiles: 8,
-        tileRate: 10,
-        maxPool: 20,
-    }
+    
 };
 
 // Scrabble-like letter distribution
@@ -68,142 +55,24 @@ let letterBag = createLetterBag();
 
 // Custom Alert System
 function setupCustomAlert() {
-    if (!document.getElementById('customAlertModal')) {
-        const modalHTML = `
-            <div id="customAlertModal" class="alert-modal-overlay" style="display: none;">
-                <div class="alert-modal-content">
-                    <button class="alert-close-btn">&times;</button>
-                    <div class="alert-message"></div>
-                    <button class="alert-ok-btn">OK</button>
-                </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
-        // Add modal styles
-        const styleSheet = document.createElement('style');
-        styleSheet.textContent = `
-            .alert-modal-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.3);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 1000;
-                animation: fadeIn 0.2s ease;
-            }
-            
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-            
-            .alert-modal-content {
-                background: white;
-                border: 2px solid #d3d6da;
-                padding: 30px;
-                padding-top: 40px;
-                min-width: 300px;
-                max-width: 500px;
-                position: relative;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                animation: slideIn 0.2s ease;
-            }
-            
-            @keyframes slideIn {
-                from { 
-                    opacity: 0;
-                    transform: translateY(-20px);
-                }
-                to { 
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-            
-            .alert-close-btn {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                background: none;
-                border: none;
-                font-size: 24px;
-                color: #787c7e;
-                cursor: pointer;
-                padding: 0;
-                width: 20px;
-                height: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: color 0.15s ease;
-            }
-            
-            .alert-close-btn:hover {
-                color: #121213;
-            }
-            
-            .alert-message {
-                font-size: 16px;
-                color: #121213;
-                line-height: 1.5;
-                margin-bottom: 20px;
-                text-align: center;
-                white-space: pre-line;
-            }
-            
-            .alert-ok-btn {
-                display: block;
-                margin: 0 auto;
-                padding: 10px 30px;
-                background: white;
-                border: 2px solid #121213;
-                color: #121213;
-                font-weight: 600;
-                font-size: 14px;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                cursor: pointer;
-                transition: all 0.15s ease;
-            }
-            
-            .alert-ok-btn:hover {
-                background: #121213;
-                color: white;
-            }
-            
-            .alert-ok-btn:active {
-                transform: scale(0.98);
-            }
-        `;
-        document.head.appendChild(styleSheet);
-        
-        // Setup event listeners
-        const modal = document.getElementById('customAlertModal');
-        const closeBtn = modal.querySelector('.alert-close-btn');
-        const okBtn = modal.querySelector('.alert-ok-btn');
-        
-        // Close on X button click
-        closeBtn.addEventListener('click', () => {
+    const modal = document.getElementById('customAlertModal');
+    const closeBtn = modal.querySelector('.alert-close-btn');
+    const okBtn = modal.querySelector('.alert-ok-btn');
+    
+    // Setup event listeners
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+    
+    okBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
             modal.style.display = 'none';
-        });
-        
-        // Close on OK button click
-        okBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-        
-        // Close on overlay click (outside modal content)
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
-    }
+        }
+    });
 }
 
 // Custom alert function
@@ -345,6 +214,22 @@ function addTileToPool() {
     renderPool();
 }
 
+// Update game timer
+function updateTimer() {
+    gameState.timeRemaining--;
+    
+    if (gameState.timeRemaining <= 0) {
+        endGame();
+        return;
+    }
+    
+    // Update overall game timer display
+    const minutes = Math.floor(gameState.timeRemaining / 60);
+    const seconds = gameState.timeRemaining % 60;
+    document.getElementById('timer').textContent = 
+        `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
 // Start the game
 function startGame() {
     gameState.gameActive = true;
@@ -360,7 +245,7 @@ function startGame() {
     
     // Remove CSS transition for smoother JavaScript animation
     const timeBar = document.getElementById('timeBarFill');
-    timeBar.style.transition = 'smooth none';
+    timeBar.style.transition = 'width 0.1s linear';
     
     // Also update progress bar more frequently for smooth animation
     gameState.progressInterval = setInterval(() => {
@@ -396,8 +281,6 @@ function scheduleTileAddition() {
         scheduleTileAddition();
     }, gameState.currentTileRate);
 }
-
-
 
 // Render the tile pool
 function renderPool() {

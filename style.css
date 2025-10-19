@@ -414,6 +414,135 @@ body {
     border-color: #538d4e;
 }
 
+/* Custom Alert Modal Styles */
+.alert-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.alert-modal-content {
+    background: white;
+    border: 2px solid #d3d6da;
+    padding: 30px;
+    padding-top: 40px;
+    min-width: 300px;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #787c7e;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.alert-close-btn:hover {
+    color: #121213;
+}
+
+.alert-message {
+    font-size: 16px;
+    color: #121213;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    text-align: center;
+    white-space: pre-line;
+}
+
+.alert-ok-btn {
+    display: block;
+    margin: 0 auto;
+    padding: 10px 30px;
+    background: white;
+    border: 2px solid #121213;
+    color: #121213;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.alert-ok-btn:hover {
+    background: #121213;
+    color: white;
+}
+
+.alert-ok-btn:active {
+    transform: scale(0.98);
+}
+
+/* Cooperative Mode Styles */
+.cooperative-layout {
+    flex-direction: column;
+    gap: 20px;
+}
+
+.cooperative-player-area {
+    flex: none;
+    height: auto;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.cooperative-layout .tile-pool {
+    order: -1;
+    flex: none;
+    min-height: 150px;
+}
+
+/* Responsive adjustments for cooperative mode */
+@media (max-width: 700px) {
+    .cooperative-layout .tile-pool {
+        min-height: 120px;
+    }
+    
+    .cooperative-player-area {
+        margin: 0 10px;
+    }
+}
+
 /* Responsive adjustments */
 @media (max-height: 600px) {
     .game-title { font-size: 36px; }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game - Placeholder</title>
+    <title>Cooperative Mode - Placeholder</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,27 +17,20 @@
                 </div>
             </div>
             
-            <div class="game-content">
-                <div class="player-area" id="player1-area">
-                    <div class="player-title">PLAYER A</div>
-                    <div class="score">Score: <span id="player1-score">0</span></div>
-                    <div class="player-collection">Collection</div>
-                    <div class="word-list" id="player1-words"></div>
-                    <div class="selected-preview" id="player1-preview"></div>
-                    <button class="create-btn" onclick="attemptAction(1)" id="player1-btn">CREATE WORD</button>
+            <div class="game-content cooperative-layout">
+                <!-- Central Player Area -->
+                <div class="player-area cooperative-player-area">
+                    <div class="player-title">TEAM</div>
+                    <div class="score">Score: <span id="team-score">0</span></div>
+                    <div class="player-collection">Words Created</div>
+                    <div class="word-list" id="team-words"></div>
+                    <div class="selected-preview" id="team-preview"></div>
+                    <button class="create-btn" onclick="attemptAction()" id="team-btn">CREATE WORD</button>
                 </div>
 
+                <!-- Tile Pool -->
                 <div class="tile-pool" id="tilePool">
                     <!-- Tiles will be dynamically added here -->
-                </div>
-
-                <div class="player-area" id="player2-area">
-                    <div class="player-title">PLAYER B</div>
-                    <div class="score">Score: <span id="player2-score">0</span></div>
-                    <div class="player-collection">Collection</div>
-                    <div class="word-list" id="player2-words"></div>
-                    <div class="selected-preview" id="player2-preview"></div>
-                    <button class="create-btn" onclick="attemptAction(2)" id="player2-btn">CREATE WORD</button>
                 </div>
             </div>
         </div>
@@ -52,6 +45,6 @@
         </div>
     </div>
 
-    <script src="game.js"></script>
+    <script src="coop.js"></script>
 </body>
 </html>

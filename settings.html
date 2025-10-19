@@ -16,7 +16,7 @@
                     <span>Min Word Length</span>
                     <span class="setting-value" id="minWordValue">3</span>
                 </div>
-                <input type="range" class="slider" id="minWordLength" min="3" max="7" value="3" 
+                <input type="range" class="slider" id="minWordLength" min="2" max="10" value="3" 
                        oninput="updateSettingValue('minWordValue', this.value)">
             </div>
 
@@ -25,7 +25,7 @@
                     <span>Game Length</span>
                     <span class="setting-value" id="gameLengthValue">3 min</span>
                 </div>
-                <input type="range" class="slider" id="gameLength" min="1" max="10" value="4" 
+                <input type="range" class="slider" id="gameLength" min="1" max="10" value="3" 
                        oninput="updateSettingValue('gameLengthValue', this.value + ' min')">
             </div>
 
@@ -34,16 +34,16 @@
                     <span>Starting Tiles</span>
                     <span class="setting-value" id="startingTilesValue">8</span>
                 </div>
-                <input type="range" class="slider" id="startingTiles" min="8" max="20" value="8" 
+                <input type="range" class="slider" id="startingTiles" min="0" max="30" value="8" 
                        oninput="updateSettingValue('startingTilesValue', this.value)">
             </div>
 
             <div class="setting-item">
                 <div class="setting-label">
                     <span>Tile Addition Rate</span>
-                    <span class="setting-value" id="tileRateValue">10 sec</span>
+                    <span class="setting-value" id="tileRateValue">30 sec</span>
                 </div>
-                <input type="range" class="slider" id="tileRate" min="2" max="10" value="10" 
+                <input type="range" class="slider" id="tileRate" min="1" max="100" value="30" 
                        oninput="updateSettingValue('tileRateValue', this.value + ' sec')">
             </div>
 
@@ -52,13 +52,12 @@
                     <span>Max Pool Size</span>
                     <span class="setting-value" id="maxPoolValue">20</span>
                 </div>
-                <input type="range" class="slider" id="maxPool" min="20" max="50" value="20" 
+                <input type="range" class="slider" id="maxPool" min="2" max="100" value="20" 
                        oninput="updateSettingValue('maxPoolValue', this.value)">
             </div>
 
             <div class="settings-buttons">
                 <a href="index.html" class="btn btn-secondary" onclick="saveSettings()">BACK</a>
-                <button class="btn" onclick="saveSettings()">START GAME</button>
             </div>
         </div>
     </div>
