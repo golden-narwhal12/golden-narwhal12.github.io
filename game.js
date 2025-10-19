@@ -37,11 +37,11 @@ let gameState = {
     nextTileTime: 0, // Track when next tile will be added
     lastTileTime: 0, // Track when last tile was added
     settings: {
-        minWordLength: 4,
-        gameLength: 5,
-        startingTiles: 12,
-        tileRate: 5,
-        maxPool: 30
+        minWordLength: 3,
+        gameLength: 4,
+        startingTiles: 8,
+        tileRate: 10,
+        maxPool: 20,
     }
 };
 
@@ -68,7 +68,6 @@ let letterBag = createLetterBag();
 
 // Custom Alert System
 function setupCustomAlert() {
-    // Create modal HTML if it doesn't exist
     if (!document.getElementById('customAlertModal')) {
         const modalHTML = `
             <div id="customAlertModal" class="alert-modal-overlay" style="display: none;">
@@ -136,8 +135,8 @@ function setupCustomAlert() {
                 color: #787c7e;
                 cursor: pointer;
                 padding: 0;
-                width: 30px;
-                height: 30px;
+                width: 20px;
+                height: 20px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
