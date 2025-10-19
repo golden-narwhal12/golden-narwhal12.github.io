@@ -1,31 +1,36 @@
-// Cooperative Game state
+// Game state
 let gameState = {
-    team: {
+    player1: {
+        score: 0,
+        words: [],
+        selectedTiles: []
+    },
+    player2: {
         score: 0,
         words: [],
         selectedTiles: []
     },
     settings: {
         minWordLength: 3,
-        gameLength: 4,
+        gameLength: 3,
         startingTiles: 8,
-        tileRate: 10,
+        tileRate: 30,
         maxPool: 20,
     },
     poolTiles: [],
     usedWords: new Set(),
-    timeRemaining: 300,
-    totalTime: 300,
+    timeRemaining: 0, 
+    totalTime: 0,
     gameActive: false,
     tileAddInterval: null,
     timerInterval: null,
     progressInterval: null,
-    currentTileRate: 5000,
+    currentTileRate: 0,
     nextTileTime: 0,
     lastTileTime: 0,
 };
 
-//  letter distribution
+// letter distribution
 const letterDistribution = {
     'A': 9, 'B': 3, 'C': 2, 'D': 4, 'E': 10, 'F': 2, 'G': 3, 'H': 2,
     'I': 9, 'J': 1, 'K': 1, 'L': 4, 'M': 2, 'N': 6, 'O': 8, 'P': 2,
@@ -46,7 +51,7 @@ function createLetterBag() {
 
 let letterBag = createLetterBag();
 
-// Custom Alerts
+// Custom Alert System
 function setupCustomAlert() {
     const modal = document.getElementById('customAlertModal');
     const closeBtn = modal.querySelector('.alert-close-btn');
@@ -160,7 +165,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // Check if tutorial should be shown
 function checkAndShowTutorial() {
-    const tutorialSeen = localStorage.getItem('coopModeTutorialSeen');
+    const tutorialSeen = localStorage.getItem('versusModeTutorialSeen');
     if (!tutorialSeen) {
         showTutorial();
     } else {
@@ -173,13 +178,14 @@ function showTutorial() {
     const modal = document.getElementById('tutorialModal');
     const messageElement = document.getElementById('tutorialMessage');
     
-    // Tutorial content
     messageElement.innerHTML = `
-        <p style="text-align: center; line-height: 1.8;">
-            - Coop mode can be played by 2+ players. You will all work together to create words from the tiles in the pool- only one of you sees the device at a time!
-            - You will receive tiles at regular intervals; create words quickly to avoid overflow.
-            - Players take turns asking questions to make the other player(s) say their intended word.
-            - Keep repeating until time runs out or the tile pool overflows!
+        <p style="text-align: center; line-height: 1.7;">
+            - This is an unconventional game in which <b>you are always looking to help your opponent.</b> At the end of the game, you want them to have more points than you. Players have to accept this paradoxical premise in order to play. It's okay to be confused, it makes the game more fun!
+            - Suppose Player A sees the letters <i>R, E, A, T, D, O, S, I</i> in the pool. They might notice the word READ can be formed- <b>but they can only create it if their opponent says the word aloud.</b> So, player A will ask <b>one question</b> to player B, such as "What do you do to books?" If Player B says "READ" in their response, Player A can then create the word READ using the letters from the pool, giving player B the points for that word. 
+            - In this exchange, player A is interested in helping player B score points, and player B is naturally interested in answering player A's question. <b>The game only works if both plauyers are aligned with this goal.</b>
+            - The strategy comes in when choosing which words to form. Players should try to form words that are easy for their opponent to say aloud in response to their question, while also trying to maximize the points they give to their opponent. <b>Longer words and words made later in the game are worth more points!</b>
+            - Players can also <b>give tiles from their own words to their opponent</b> to help them form new words. To do this, players can click on tiles in their own words to select them, and then click the "GIVE WORD" button to give those tiles to their opponent.
+            - The game continues until the timer runs out. <b>The player with the higher score at the end wins!</b>
         </p>
     `;
     
@@ -191,11 +197,9 @@ function closeTutorial() {
     const modal = document.getElementById('tutorialModal');
     modal.style.display = 'none';
     
-    // Mark tutorial as seen
-    localStorage.setItem('coopModeTutorialSeen', 'true');
+    localStorage.setItem('versusModeTutorialSeen', 'true');
     
-    // Initialize game if not already initialized
-    if (!gameState.gameActive) {
+    if (!gameState.gameActive && gameState.timeRemaining === 0) {
         initializeGame();
     }
 }
@@ -219,17 +223,12 @@ function initializeGame() {
         addTileToPool();
     }
     
-    updateTileCounter();
     startGame();
 }
 
 // Add a random tile to the pool
 function addTileToPool() {
-    if (gameState.poolTiles.length >= gameState.settings.maxPool) {
-        loseGame();
-        return;
-    }
-    
+    if (gameState.poolTiles.length >= gameState.settings.maxPool) return;
     if (letterBag.length === 0) {
         letterBag = createLetterBag();
     }
@@ -241,31 +240,10 @@ function addTileToPool() {
     gameState.poolTiles.push({
         id: tileId,
         letter: letter,
-        selected: false
+        selectedBy: { player1: false, player2: false }
     });
     
     renderPool();
-    updateTileCounter();
-}
-
-// Update tile counter with color coding
-function updateTileCounter() {
-    const counter = document.getElementById('tileCounter');
-    const currentTiles = gameState.poolTiles.length;
-    const maxTiles = gameState.settings.maxPool;
-    
-    counter.textContent = `${currentTiles}/${maxTiles}`;
-    
-    counter.classList.remove('safe', 'warning', 'danger');
-    
-    const percentage = currentTiles / maxTiles;
-    if (percentage < 0.5) {
-        counter.classList.add('safe');
-    } else if (percentage < 0.8) {
-        counter.classList.add('warning');
-    } else {
-        counter.classList.add('danger');
-    }
 }
 
 // Update game timer
@@ -295,7 +273,7 @@ function startGame() {
     }, 1000);
     
     const timeBar = document.getElementById('timeBarFill');
-    timeBar.style.transition = 'smooth none';
+    timeBar.style.transition = 'width 0.1s linear';
     
     gameState.progressInterval = setInterval(() => {
         const now = Date.now();
@@ -307,7 +285,7 @@ function startGame() {
     scheduleTileAddition();
 }
 
-// Schedule tile addition
+// Schedule tile addition with exponentially increasing frequency
 function scheduleTileAddition() {
     if (!gameState.gameActive) return;
     
@@ -336,8 +314,18 @@ function renderPool() {
         const tileDiv = document.createElement('div');
         tileDiv.className = 'game-tile';
         
-        if (tile.selected) {
-            tileDiv.classList.add('selected');
+        if (tile.selectedBy.player1 && tile.selectedBy.player2) {
+            tileDiv.style.background = 'linear-gradient(135deg, #538d4e 50%, #c9b458 50%)';
+            tileDiv.style.color = 'white';
+            tileDiv.style.borderColor = '#121213';
+        } else if (tile.selectedBy.player1) {
+            tileDiv.style.background = '#538d4e';
+            tileDiv.style.color = 'white';
+            tileDiv.style.borderColor = '#538d4e';
+        } else if (tile.selectedBy.player2) {
+            tileDiv.style.background = '#c9b458';
+            tileDiv.style.color = 'white';
+            tileDiv.style.borderColor = '#c9b458';
         }
         
         tileDiv.textContent = tile.letter;
@@ -346,72 +334,92 @@ function renderPool() {
     });
 }
 
-// Toggle pool tile selection
+// Toggle pool tile selection for both players
 function togglePoolTile(tileId) {
     const tile = gameState.poolTiles.find(t => t.id === tileId);
     if (!tile) return;
     
-    tile.selected = !tile.selected;
-    
-    if (tile.selected) {
-        gameState.team.selectedTiles.push({
+    if (!tile.selectedBy.player1 && !tile.selectedBy.player2) {
+        tile.selectedBy.player1 = true;
+        gameState.player1.selectedTiles.push({
+            id: tileId,
+            letter: tile.letter,
+            source: 'pool'
+        });
+    } else if (tile.selectedBy.player1 && !tile.selectedBy.player2) {
+        tile.selectedBy.player1 = false;
+        tile.selectedBy.player2 = true;
+        const index = gameState.player1.selectedTiles.findIndex(t => t.id === tileId && t.source === 'pool');
+        if (index > -1) gameState.player1.selectedTiles.splice(index, 1);
+        gameState.player2.selectedTiles.push({
+            id: tileId,
+            letter: tile.letter,
+            source: 'pool'
+        });
+    } else if (!tile.selectedBy.player1 && tile.selectedBy.player2) {
+        tile.selectedBy.player1 = true;
+        gameState.player1.selectedTiles.push({
             id: tileId,
             letter: tile.letter,
             source: 'pool'
         });
     } else {
-        const index = gameState.team.selectedTiles.findIndex(t => t.id === tileId);
-        if (index > -1) {
-            gameState.team.selectedTiles.splice(index, 1);
-        }
+        tile.selectedBy.player1 = false;
+        tile.selectedBy.player2 = false;
+        let index = gameState.player1.selectedTiles.findIndex(t => t.id === tileId && t.source === 'pool');
+        if (index > -1) gameState.player1.selectedTiles.splice(index, 1);
+        index = gameState.player2.selectedTiles.findIndex(t => t.id === tileId && t.source === 'pool');
+        if (index > -1) gameState.player2.selectedTiles.splice(index, 1);
     }
     
     renderPool();
-    updatePreview();
+    updatePreview('player1');
+    updatePreview('player2');
 }
 
-// Toggle word tile selection for extension
-function toggleWordTile(wordIndex, tileIndex) {
-    const word = gameState.team.words[wordIndex];
-    if (!word) return;
+// Toggle own word tile selection for giving to opponent
+function toggleOwnWordTile(player, wordIndex, tileIndex) {
+    const word = gameState[player].words[wordIndex];
+    if (!word || word.tiles[tileIndex].stolen) return;
     
     const tile = word.tiles[tileIndex];
     
-    if (tile.selected === undefined) {
-        tile.selected = false;
+    if (!tile.selectedBy) {
+        tile.selectedBy = { player1: false, player2: false };
     }
     
-    tile.selected = !tile.selected;
-    
-    if (tile.selected) {
-        gameState.team.selectedTiles.push({
-            letter: tile.letter,
-            source: 'word',
-            wordIndex: wordIndex,
-            tileIndex: tileIndex
-        });
-    } else {
-        const index = gameState.team.selectedTiles.findIndex(
-            t => t.source === 'word' && t.wordIndex === wordIndex && t.tileIndex === tileIndex
+    if (tile.selectedBy[player]) {
+        tile.selectedBy[player] = false;
+        const index = gameState[player].selectedTiles.findIndex(
+            t => t.source === 'own' && t.wordIndex === wordIndex && t.tileIndex === tileIndex
         );
         if (index > -1) {
-            gameState.team.selectedTiles.splice(index, 1);
+            gameState[player].selectedTiles.splice(index, 1);
         }
+    } else {
+        tile.selectedBy[player] = true;
+        gameState[player].selectedTiles.push({
+            letter: tile.letter,
+            source: 'own',
+            wordIndex: wordIndex,
+            tileIndex: tileIndex,
+            ownerPlayer: player
+        });
     }
     
-    renderTeamWords();
-    updatePreview();
+    renderPlayerWords();
+    updatePreview(player);
 }
 
 // Update selected tiles preview
-function updatePreview() {
-    const previewElement = document.getElementById('team-preview');
+function updatePreview(player) {
+    const previewElement = document.getElementById(player + '-preview');
     previewElement.innerHTML = '';
     
-    gameState.team.selectedTiles.forEach(tile => {
+    gameState[player].selectedTiles.forEach(tile => {
         const tileDiv = document.createElement('div');
         tileDiv.className = 'preview-tile';
-        if (tile.source === 'word') {
+        if (tile.source === 'own') {
             tileDiv.classList.add('from-opponent');
         }
         tileDiv.textContent = tile.letter;
@@ -419,9 +427,12 @@ function updatePreview() {
     });
 }
 
-// Attempt to create a word
-function attemptAction() {
-    const selectedTiles = gameState.team.selectedTiles;
+// Attempt to create a word or give word to opponent
+function attemptAction(playerNum) {
+    const player = 'player' + playerNum;
+    const opponent = playerNum === 1 ? 'player2' : 'player1';
+    
+    const selectedTiles = gameState[player].selectedTiles;
     if (selectedTiles.length < gameState.settings.minWordLength) {
         customAlert(`Words must be at least ${gameState.settings.minWordLength} letters!`);
         return;
@@ -434,15 +445,14 @@ function attemptAction() {
         return;
     }
     
-    const wordTiles = selectedTiles.filter(t => t.source === 'word');
+    const ownWordTiles = selectedTiles.filter(t => t.source === 'own');
     let isExtension = false;
     let extendedWordIndex = -1;
-    let originalPoints = 0;
     
-    if (wordTiles.length > 0) {
+    if (ownWordTiles.length > 0) {
         const wordGroups = {};
-        wordTiles.forEach(t => {
-            const key = t.wordIndex;
+        ownWordTiles.forEach(t => {
+            const key = `${t.ownerPlayer}-${t.wordIndex}`;
             if (!wordGroups[key]) {
                 wordGroups[key] = [];
             }
@@ -454,20 +464,24 @@ function attemptAction() {
             return;
         }
         
-        const wordIndex = parseInt(Object.keys(wordGroups)[0]);
-        const extendedWord = gameState.team.words[wordIndex];
+        const groupKey = Object.keys(wordGroups)[0];
+        const [owner, wordIdx] = groupKey.split('-');
+        extendedWordIndex = parseInt(wordIdx);
         
-        if (wordGroups[wordIndex].length !== extendedWord.tiles.length) {
+        const extendedWord = gameState[player].words[extendedWordIndex];
+        
+        const activeTilesInWord = extendedWord.tiles.filter(t => !t.stolen).length;
+        if (wordGroups[groupKey].length !== activeTilesInWord) {
             customAlert('You must use all tiles from the word you\'re extending!');
             return;
         }
         
         isExtension = true;
-        extendedWordIndex = wordIndex;
-        originalPoints = extendedWord.points;
     }
-    
-    const basePoints = Math.floor(Math.pow(word.length, 1.1));
+
+    // Calculate points with time bonus
+    const timeElapsedMinutes = (gameState.totalTime - gameState.timeRemaining) / 60;
+    const basePoints = Math.floor(Math.pow(word.length, 1.1)) + Math.floor(timeElapsedMinutes);
     const points = isExtension ? basePoints + 1 : basePoints;
     
     const newWord = {
@@ -475,21 +489,28 @@ function attemptAction() {
         tiles: selectedTiles.map(t => ({
             letter: t.letter,
             stolen: false,
-            selected: false
+            selectedBy: { player1: false, player2: false }
         })),
         points: points,
-        xExtension: isExtension
+        isExtension: isExtension
     };
     
-    gameState.team.words.push(newWord);
-    gameState.team.score += points;
+    gameState[opponent].words.push(newWord);
+    gameState[opponent].score += points;
     gameState.usedWords.add(word);
     
     if (isExtension) {
-        const extendedWord = gameState.team.words[extendedWordIndex];
-        gameState.team.score -= extendedWord.points;
-        gameState.team.words.splice(extendedWordIndex, 1);
-        gameState.usedWords.delete(extendedWord.word);
+        const extendedWord = gameState[player].words[extendedWordIndex];
+        
+        extendedWord.tiles.forEach(tile => {
+            tile.stolen = true;
+            if (tile.selectedBy) {
+                tile.selectedBy.player1 = false;
+                tile.selectedBy.player2 = false;
+            }
+        });
+        
+        gameState[player].score -= extendedWord.points;
     }
     
     const poolTiles = selectedTiles.filter(t => t.source === 'pool');
@@ -500,67 +521,75 @@ function attemptAction() {
         }
     });
     
-    gameState.team.selectedTiles = [];
+    gameState[player].selectedTiles = [];
     
     gameState.poolTiles.forEach(tile => {
-        tile.selected = false;
+        tile.selectedBy[player] = false;
     });
     
-    gameState.team.words.forEach(word => {
+    gameState[player].words.forEach(word => {
         word.tiles.forEach(tile => {
-            tile.selected = false;
+            if (tile.selectedBy) {
+                tile.selectedBy[player] = false;
+            }
         });
     });
     
     renderPool();
-    renderTeamWords();
-    updateScore();
-    updatePreview();
-    updateTileCounter();
+    renderPlayerWords();
+    updateScores();
+    updatePreview(player);
 }
 
-// Render team words
-function renderTeamWords() {
-    const wordsElement = document.getElementById('team-words');
-    wordsElement.innerHTML = '';
-    
-    gameState.team.words.forEach((word, wordIndex) => {
-        const wordContainer = document.createElement('div');
-        wordContainer.className = 'word-container';
+// Render player words
+function renderPlayerWords() {
+    ['player1', 'player2'].forEach(player => {
+        const wordsElement = document.getElementById(player + '-words');
+        wordsElement.innerHTML = '';
         
-        word.tiles.forEach((tile, tileIndex) => {
-            const tileDiv = document.createElement('div');
-            tileDiv.className = 'word-tile';
+        gameState[player].words.forEach((word, wordIndex) => {
+            const wordContainer = document.createElement('div');
+            wordContainer.className = 'word-container';
             
-            if (tile.selected) {
-                tileDiv.classList.add('selected');
-            }
-            
-            tileDiv.style.cursor = 'pointer';
-            tileDiv.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleWordTile(wordIndex, tileIndex);
+            word.tiles.forEach((tile, tileIndex) => {
+                const tileDiv = document.createElement('div');
+                tileDiv.className = 'word-tile';
+                
+                if (tile.stolen) {
+                    tileDiv.classList.add('stolen');
+                } else {
+                    if (tile.selectedBy && tile.selectedBy[player]) {
+                        tileDiv.classList.add('selected');
+                    }
+                    
+                    tileDiv.style.cursor = 'pointer';
+                    tileDiv.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        toggleOwnWordTile(player, wordIndex, tileIndex);
+                    });
+                }
+                
+                tileDiv.textContent = tile.letter;
+                wordContainer.appendChild(tileDiv);
             });
             
-            tileDiv.textContent = tile.letter;
-            wordContainer.appendChild(tileDiv);
+            const pointsDiv = document.createElement('div');
+            pointsDiv.className = 'word-points';
+            if (word.isExtension) {
+                pointsDiv.classList.add('steal-bonus');
+            }
+            pointsDiv.textContent = word.points + 'pts';
+            wordContainer.appendChild(pointsDiv);
+            
+            wordsElement.appendChild(wordContainer);
         });
-        
-        const pointsDiv = document.createElement('div');
-        pointsDiv.className = 'word-points';
-        if (word.isExtension) {
-            pointsDiv.classList.add('steal-bonus');
-        }
-        pointsDiv.textContent = word.points + 'pts';
-        wordContainer.appendChild(pointsDiv);
-        
-        wordsElement.appendChild(wordContainer);
     });
 }
 
-// Update score
-function updateScore() {
-    document.getElementById('team-score').textContent = gameState.team.score;
+// Update scores
+function updateScores() {
+    document.getElementById('player1-score').textContent = gameState.player1.score;
+    document.getElementById('player2-score').textContent = gameState.player2.score;
 }
 
 // End game early
@@ -572,50 +601,7 @@ function endGameEarly() {
     });
 }
 
-// Lose game due to tile overflow
-function loseGame() {
-    gameState.gameActive = false;
-    
-    clearInterval(gameState.timerInterval);
-    clearInterval(gameState.progressInterval);
-    clearTimeout(gameState.tileAddInterval);
-    
-    const finalScore = gameState.team.score;
-    
-    const loseModal = document.createElement('div');
-    loseModal.className = 'alert-modal-overlay';
-    loseModal.style.display = 'flex';
-    loseModal.innerHTML = `
-        <div class="alert-modal-content" style="text-align: center;">
-            <div style="font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #ff6b6b; letter-spacing: 0.1em;">
-                YOU LOST!
-            </div>
-            <div style="font-size: 16px; margin-bottom: 15px; color: #787c7e;">
-                The tile pool overflowed
-            </div>
-            <div style="font-size: 18px; margin-bottom: 30px; color: #121213;">
-                <div style="margin-bottom: 15px;">Final Score:</div>
-                <div style="font-size: 32px; font-weight: 700; color: #121213;">
-                    ${finalScore}
-                </div>
-            </div>
-            <div style="display: flex; gap: 15px; justify-content: center;">
-                <button class="alert-ok-btn" onclick="window.location.href='index.html'">MAIN MENU</button>
-                <button class="alert-ok-btn" style="background: #538d4e; border-color: #538d4e; color: white;" onclick="location.reload()">TRY AGAIN</button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(loseModal);
-    
-    loseModal.addEventListener('click', (e) => {
-        if (e.target === loseModal) {
-            window.location.href = 'index.html';
-        }
-    });
-}
-
-// End the game normally
+// End the game
 function endGame() {
     gameState.gameActive = false;
     
@@ -623,7 +609,8 @@ function endGame() {
     clearInterval(gameState.progressInterval);
     clearTimeout(gameState.tileAddInterval);
     
-    const finalScore = gameState.team.score;
+    const winner = gameState.player1.score > gameState.player2.score ? 'PLAYER A' :
+                   gameState.player2.score > gameState.player1.score ? 'PLAYER B' : 'TIE';
     
     const endGameModal = document.createElement('div');
     endGameModal.className = 'alert-modal-overlay';
@@ -631,12 +618,23 @@ function endGame() {
     endGameModal.innerHTML = `
         <div class="alert-modal-content" style="text-align: center;">
             <div style="font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #121213; letter-spacing: 0.1em;">
-                GAME OVER!
+                ${winner === 'TIE' ? 'IT\'S A TIE!' : winner + ' WINS!'}
             </div>
             <div style="font-size: 18px; margin-bottom: 30px; color: #121213;">
-                <div style="margin-bottom: 15px;">Score:</div>
-                <div style="font-size: 48px; font-weight: 700; color: #538d4e;">
-                    ${finalScore}
+                <div style="margin-bottom: 15px;">Final Scores:</div>
+                <div style="display: flex; justify-content: space-around; max-width: 300px; margin: 0 auto;">
+                    <div>
+                        <div style="font-size: 14px; color: #787c7e; margin-bottom: 5px;">PLAYER A</div>
+                        <div style="font-size: 32px; font-weight: 700; color: ${gameState.player1.score > gameState.player2.score ? '#538d4e' : '#121213'};">
+                            ${gameState.player1.score}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 14px; color: #787c7e; margin-bottom: 5px;">PLAYER B</div>
+                        <div style="font-size: 32px; font-weight: 700; color: ${gameState.player2.score > gameState.player1.score ? '#538d4e' : '#121213'};">
+                            ${gameState.player2.score}
+                        </div>
+                    </div>
                 </div>
             </div>
             <div style="display: flex; gap: 15px; justify-content: center;">

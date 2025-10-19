@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cooperative Mode - Tileholder</title>
+    <title>Versus Mode - Tileholders</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,20 +16,30 @@
                 <div class="time-bar">
                     <div class="time-bar-fill" id="timeBarFill"></div>
                 </div>
-                <div class="tile-counter" id="tileCounter">0/20</div>
             </div>
             
-            <div class="game-content cooperative-layout">
-                <div class="player-area cooperative-player-area">
-                    <div class="player-title">TEAM</div>
-                    <div class="score">Score: <span id="team-score">0</span></div>
-                    <div class="player-collection">Words Created</div>
-                    <div class="word-list" id="team-words"></div>
-                    <div class="selected-preview" id="team-preview"></div>
-                    <button class="create-btn" onclick="attemptAction()" id="team-btn">CREATE WORD</button>
+            <div class="game-content">
+                <div class="player-area" id="player1-area">
+                    <div class="player-title">PLAYER A</div>
+                    <div class="score">Score: <span id="player1-score">0</span></div>
+                    <div class="player-collection">Collection</div>
+                    <div class="word-list" id="player1-words"></div>
+                    <div class="selected-preview" id="player1-preview"></div>
+                    <button class="create-btn" onclick="attemptAction(1)" id="player1-btn">GIVE WORD</button>
                 </div>
 
-                <div class="tile-pool" id="tilePool"></div>
+                <div class="tile-pool" id="tilePool">
+                    <!-- Tiles dynamically added here -->
+                </div>
+
+                <div class="player-area" id="player2-area">
+                    <div class="player-title">PLAYER B</div>
+                    <div class="score">Score: <span id="player2-score">0</span></div>
+                    <div class="player-collection">Collection</div>
+                    <div class="word-list" id="player2-words"></div>
+                    <div class="selected-preview" id="player2-preview"></div>
+                    <button class="create-btn" onclick="attemptAction(2)" id="player2-btn">GIVE WORD</button>
+                </div>
             </div>
         </div>
     </div>
@@ -51,12 +61,12 @@
                 HOW TO PLAY
             </div>
             <div class="alert-message" id="tutorialMessage">
-                <!-- Tutorial content here ?-->
+                <!-- Tutorial content will go here -->
             </div>
             <button class="alert-ok-btn" onclick="closeTutorial()">GOT IT</button>
         </div>
     </div>
 
-    <script src="coop.js"></script>
+    <script src="versus.js"></script>
 </body>
 </html>

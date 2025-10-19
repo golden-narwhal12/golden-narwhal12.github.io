@@ -141,8 +141,29 @@ body {
 .settings-buttons {
     display: flex;
     gap: 15px;
-    margin-top: 40px;
+    margin-top: 10px;
     justify-content: center;
+}
+
+.preset-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+    justify-content: center;
+}
+
+.preset-btn {
+    background: #538d4e;
+    color: white;
+    border-color: #538d4e;
+    font-size: 14px;
+    padding: 10px 10px;
+}
+
+.preset-btn:hover {
+    background: #4a7c47;
+    border-color: #4a7c47;
+    color: white;
 }
 
 .btn-secondary {    
@@ -193,6 +214,26 @@ body {
 
 .end-game-btn:hover {
     background: #5a5e60;
+}
+
+.help-btn {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 8px 16px;
+    background: #538d4e;
+    color: white;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.help-btn:hover {
+    background: #4a7c47;
 }
 
 .timer {
@@ -252,7 +293,6 @@ body {
     font-size: 14px;
     color: #787c7e;
     margin-bottom: 10px;
-    
 }
 
 .word-list {
@@ -512,6 +552,18 @@ body {
     transform: scale(0.98);
 }
 
+.tutorial-content {
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.tutorial-content .alert-message {
+    text-align: left;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
 /* Cooperative Mode Styles */
 .cooperative-layout {
     flex-direction: column;
@@ -551,13 +603,6 @@ body {
 
 .tile-counter.danger {
     color: #ff6b6b;
-}
-
-/* Cooperative Mode Word Tile Selection */
-.word-tile.selected {
-    background: #c9b458;
-    color: white;
-    border-color: #c9b458;
 }
 
 /* Responsive adjustments for cooperative mode */

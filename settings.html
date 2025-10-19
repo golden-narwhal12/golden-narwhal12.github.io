@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Settings - Placeholder</title>
+    <title>Settings - Tileholders</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -43,7 +43,7 @@
                     <span>Tile Addition Rate</span>
                     <span class="setting-value" id="tileRateValue">30 sec</span>
                 </div>
-                <input type="range" class="slider" id="tileRate" min="1" max="100" value="30" 
+                <input type="range" class="slider" id="tileRate" min="1" max="30" value="30" 
                        oninput="updateSettingValue('tileRateValue', this.value + ' sec')">
             </div>
 
@@ -54,6 +54,11 @@
                 </div>
                 <input type="range" class="slider" id="maxPool" min="2" max="100" value="20" 
                        oninput="updateSettingValue('maxPoolValue', this.value)">
+            </div>
+
+            <div class="preset-buttons">
+                <button class="btn preset-btn" onclick="applyVersusPreset()">VERSUS PRESET</button>
+                <button class="btn preset-btn" onclick="applyCoopPreset()">COOP PRESET</button>
             </div>
 
             <div class="settings-buttons">
@@ -91,6 +96,42 @@
 
         function updateSettingValue(id, value) {
             document.getElementById(id).textContent = value;
+        }
+
+        function applyVersusPreset() {
+            // Set values for versus mode preset
+            document.getElementById('minWordLength').value = 3;
+            document.getElementById('minWordValue').textContent = 3;
+            
+            document.getElementById('gameLength').value = 4;
+            document.getElementById('gameLengthValue').textContent = '4 min';
+            
+            document.getElementById('startingTiles').value = 16;
+            document.getElementById('startingTilesValue').textContent = 16;
+            
+            document.getElementById('tileRate').value = 8;
+            document.getElementById('tileRateValue').textContent = '8 sec';
+            
+            document.getElementById('maxPool').value = 32;
+            document.getElementById('maxPoolValue').textContent = 32;
+        }
+
+        function applyCoopPreset() {
+            // Set values for coop mode preset
+            document.getElementById('minWordLength').value = 4;
+            document.getElementById('minWordValue').textContent = 4;
+            
+            document.getElementById('gameLength').value = 2;
+            document.getElementById('gameLengthValue').textContent = '2 min';
+            
+            document.getElementById('startingTiles').value = 14;
+            document.getElementById('startingTilesValue').textContent = 14;
+            
+            document.getElementById('tileRate').value = 8;
+            document.getElementById('tileRateValue').textContent = '8 sec';
+            
+            document.getElementById('maxPool').value = 24;
+            document.getElementById('maxPoolValue').textContent = 24;
         }
 
         function saveSettings() {
