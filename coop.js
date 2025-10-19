@@ -5,6 +5,13 @@ let gameState = {
         words: [],
         selectedTiles: []
     },
+    settings: {
+        minWordLength: 3,
+        gameLength: 4,
+        startingTiles: 8,
+        tileRate: 10,
+        maxPool: 20,
+    },
     poolTiles: [],
     usedWords: new Set(),
     timeRemaining: 300, // 5 minutes default
@@ -16,13 +23,6 @@ let gameState = {
     currentTileRate: 5000,
     nextTileTime: 0,
     lastTileTime: 0,
-    settings: {
-        minWordLength: 3,
-        gameLength: 4,
-        startingTiles: 8,
-        tileRate: 10,
-        maxPool: 20,
-    }
 };
 
 // Scrabble-like letter distribution
@@ -177,12 +177,18 @@ function initializeGame() {
         addTileToPool();
     }
     
+    updateTileCounter();
     startGame();
 }
 
 // Add a random tile to the pool
 function addTileToPool() {
-    if (gameState.poolTiles.length >= gameState.settings.maxPool) return;
+    if (gameState.poolTiles.length >= gameState.settings.maxPool) {
+        // Game over condition - tile overflow
+        loseGame();
+        return;
+    }
+    
     if (letterBag.length === 0) {
         letterBag = createLetterBag();
     }
@@ -198,6 +204,29 @@ function addTileToPool() {
     });
     
     renderPool();
+    updateTileCounter();
+}
+
+// Update tile counter with color coding
+function updateTileCounter() {
+    const counter = document.getElementById('tileCounter');
+    const currentTiles = gameState.poolTiles.length;
+    const maxTiles = gameState.settings.maxPool;
+    
+    counter.textContent = `${currentTiles}/${maxTiles}`;
+    
+    // Remove all color classes
+    counter.classList.remove('safe', 'warning', 'danger');
+    
+    // Add appropriate color class
+    const percentage = currentTiles / maxTiles;
+    if (percentage < 0.5) {
+        counter.classList.add('safe');
+    } else if (percentage < 0.8) {
+        counter.classList.add('warning');
+    } else {
+        counter.classList.add('danger');
+    }
 }
 
 // Update game timer
@@ -302,6 +331,40 @@ function togglePoolTile(tileId) {
     updatePreview();
 }
 
+// Toggle word tile selection for extension
+function toggleWordTile(wordIndex, tileIndex) {
+    const word = gameState.team.words[wordIndex];
+    if (!word) return;
+    
+    const tile = word.tiles[tileIndex];
+    
+    // Initialize selected state if not present
+    if (tile.selected === undefined) {
+        tile.selected = false;
+    }
+    
+    tile.selected = !tile.selected;
+    
+    if (tile.selected) {
+        gameState.team.selectedTiles.push({
+            letter: tile.letter,
+            source: 'word',
+            wordIndex: wordIndex,
+            tileIndex: tileIndex
+        });
+    } else {
+        const index = gameState.team.selectedTiles.findIndex(
+            t => t.source === 'word' && t.wordIndex === wordIndex && t.tileIndex === tileIndex
+        );
+        if (index > -1) {
+            gameState.team.selectedTiles.splice(index, 1);
+        }
+    }
+    
+    renderTeamWords();
+    updatePreview();
+}
+
 // Update selected tiles preview
 function updatePreview() {
     const previewElement = document.getElementById('team-preview');
@@ -310,6 +373,9 @@ function updatePreview() {
     gameState.team.selectedTiles.forEach(tile => {
         const tileDiv = document.createElement('div');
         tileDiv.className = 'preview-tile';
+        if (tile.source === 'word') {
+            tileDiv.classList.add('from-opponent');
+        }
         tileDiv.textContent = tile.letter;
         previewElement.appendChild(tileDiv);
     });
@@ -330,22 +396,71 @@ function attemptAction() {
         return;
     }
     
-    const points = Math.floor(Math.pow(word.length, 1.1));
+    // Check if this is a word extension
+    const wordTiles = selectedTiles.filter(t => t.source === 'word');
+    let isExtension = false;
+    let extendedWordIndex = -1;
+    let originalPoints = 0;
     
+    if (wordTiles.length > 0) {
+        // This is a word extension - verify all tiles from one word are used
+        const wordGroups = {};
+        wordTiles.forEach(t => {
+            const key = t.wordIndex;
+            if (!wordGroups[key]) {
+                wordGroups[key] = [];
+            }
+            wordGroups[key].push(t);
+        });
+        
+        if (Object.keys(wordGroups).length > 1) {
+            customAlert('You can only extend one word at a time!');
+            return;
+        }
+        
+        const wordIndex = parseInt(Object.keys(wordGroups)[0]);
+        const extendedWord = gameState.team.words[wordIndex];
+        
+        // Check if ALL tiles from the extended word are selected
+        if (wordGroups[wordIndex].length !== extendedWord.tiles.length) {
+            customAlert('You must use all tiles from the word you\'re extending!');
+            return;
+        }
+        
+        isExtension = true;
+        extendedWordIndex = wordIndex;
+        originalPoints = extendedWord.points;
+    }
+    
+    // Calculate points
+    const basePoints = Math.floor(Math.pow(word.length, 1.1));
+    const points = isExtension ? basePoints + 1 : basePoints;
+    
+    // Add word to team's collection
     const newWord = {
         word: word,
         tiles: selectedTiles.map(t => ({
             letter: t.letter,
-            stolen: false
+            stolen: false,
+            selected: false
         })),
         points: points,
-        isSteal: false
+        xExtension: isExtension
     };
     
     gameState.team.words.push(newWord);
     gameState.team.score += points;
     gameState.usedWords.add(word);
     
+    // Handle word extension - remove the original word
+    if (isExtension) {
+        const extendedWord = gameState.team.words[extendedWordIndex];
+        gameState.team.score -= extendedWord.points; // Remove original points
+        gameState.team.words.splice(extendedWordIndex, 1); // Remove original word
+        gameState.usedWords.delete(extendedWord.word); // Remove from used words
+    }
+    
+    // Remove used tiles from pool
     const poolTiles = selectedTiles.filter(t => t.source === 'pool');
     poolTiles.forEach(tile => {
         const index = gameState.poolTiles.findIndex(t => t.id === tile.id);
@@ -354,16 +469,25 @@ function attemptAction() {
         }
     });
     
+    // Clear selection
     gameState.team.selectedTiles = [];
     
+    // Clear selection states
     gameState.poolTiles.forEach(tile => {
         tile.selected = false;
+    });
+    
+    gameState.team.words.forEach(word => {
+        word.tiles.forEach(tile => {
+            tile.selected = false;
+        });
     });
     
     renderPool();
     renderTeamWords();
     updateScore();
     updatePreview();
+    updateTileCounter();
 }
 
 // Render team words
@@ -378,12 +502,27 @@ function renderTeamWords() {
         word.tiles.forEach((tile, tileIndex) => {
             const tileDiv = document.createElement('div');
             tileDiv.className = 'word-tile';
+            
+            if (tile.selected) {
+                tileDiv.classList.add('selected');
+            }
+            
+            // Make word tiles clickable for extension
+            tileDiv.style.cursor = 'pointer';
+            tileDiv.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleWordTile(wordIndex, tileIndex);
+            });
+            
             tileDiv.textContent = tile.letter;
             wordContainer.appendChild(tileDiv);
         });
         
         const pointsDiv = document.createElement('div');
         pointsDiv.className = 'word-points';
+        if (word.isExtension) {
+            pointsDiv.classList.add('steal-bonus');
+        }
         pointsDiv.textContent = word.points + 'pts';
         wordContainer.appendChild(pointsDiv);
         
@@ -405,7 +544,50 @@ function endGameEarly() {
     });
 }
 
-// End the game
+// Lose game due to tile overflow
+function loseGame() {
+    gameState.gameActive = false;
+    
+    clearInterval(gameState.timerInterval);
+    clearInterval(gameState.progressInterval);
+    clearTimeout(gameState.tileAddInterval);
+    
+    const finalScore = gameState.team.score;
+    
+    const loseModal = document.createElement('div');
+    loseModal.className = 'alert-modal-overlay';
+    loseModal.style.display = 'flex';
+    loseModal.innerHTML = `
+        <div class="alert-modal-content" style="text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #ff6b6b; letter-spacing: 0.1em;">
+                YOU LOST!
+            </div>
+            <div style="font-size: 16px; margin-bottom: 15px; color: #787c7e;">
+                The tile pool overflowed
+            </div>
+            <div style="font-size: 18px; margin-bottom: 30px; color: #121213;">
+                <div style="margin-bottom: 15px;">Final Score:</div>
+                <div style="font-size: 32px; font-weight: 700; color: #121213;">
+                    ${finalScore}
+                </div>
+            </div>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="alert-ok-btn" onclick="window.location.href='index.html'">MAIN MENU</button>
+                <button class="alert-ok-btn" style="background: #538d4e; border-color: #538d4e; color: white;" onclick="location.reload()">TRY AGAIN</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(loseModal);
+    
+    loseModal.addEventListener('click', (e) => {
+        if (e.target === loseModal) {
+            window.location.href = 'index.html';
+        }
+    });
+}
+
+// End the game normally (time up or early end)
 function endGame() {
     gameState.gameActive = false;
     

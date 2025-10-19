@@ -58,7 +58,7 @@ body {
     min-width: 200px;
     text-decoration: none;
     text-align: center;
-    display: inline-block;
+    display: center;
 }
 
 .btn:hover {
@@ -530,6 +530,34 @@ body {
     order: -1;
     flex: none;
     min-height: 150px;
+}
+
+/* Tile Counter */
+.tile-counter {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 5px;
+    transition: color 0.3s ease;
+}
+
+.tile-counter.safe {
+    color: #538d4e;
+}
+
+.tile-counter.warning {
+    color: #c9b458;
+}
+
+.tile-counter.danger {
+    color: #ff6b6b;
+}
+
+/* Cooperative Mode Word Tile Selection */
+.word-tile.selected {
+    background: #c9b458;
+    color: white;
+    border-color: #c9b458;
 }
 
 /* Responsive adjustments for cooperative mode */
