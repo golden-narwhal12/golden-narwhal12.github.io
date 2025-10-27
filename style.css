@@ -38,6 +38,21 @@ body {
     color: #444451; 
 }
 
+/* Mobile title sizing */
+@media (max-width: 600px) {
+    .game-title {
+        font-size: 36px;
+        letter-spacing: 0.15em;
+    }
+}
+
+@media (max-width: 400px) {
+    .game-title {
+        font-size: 28px;
+        letter-spacing: 0.1em;
+    }
+}
+
 .button-container {
     display: flex;
     flex-direction: column;
@@ -375,6 +390,29 @@ body {
     gap: 4px;
 }
 
+.clear-btn {
+    padding: 4px 12px;
+    background: #787c7e;
+    color: white;
+    border: none;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    margin-bottom: 5px;
+}
+
+.clear-btn:hover {
+    background: #5a5e60;
+}
+
+.clear-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .preview-tile {
     width: 30px;
     height: 30px;
@@ -566,21 +604,20 @@ body {
 
 /* Cooperative Mode Styles */
 .cooperative-layout {
-    flex-direction: column;
+    flex-direction: row;
     gap: 20px;
 }
 
 .cooperative-player-area {
-    flex: none;
-    height: auto;
-    max-width: 600px;
-    margin: 0 auto;
-    width: 100%;
+    flex: 1;
+    max-width: none;
+    margin: 0;
+    width: auto;
 }
 
 .cooperative-layout .tile-pool {
-    order: -1;
-    flex: none;
+    order: 0;
+    flex: 1;
     min-height: 150px;
 }
 
@@ -605,14 +642,28 @@ body {
     color: #ff6b6b;
 }
 
-/* Responsive adjustments for cooperative mode */
-@media (max-width: 700px) {
+/* Portrait mobile: stack vertically */
+@media (max-width: 700px) and (orientation: portrait) {
+    .cooperative-layout {
+        flex-direction: column;
+    }
+    
     .cooperative-layout .tile-pool {
+        order: -1;
         min-height: 120px;
     }
     
     .cooperative-player-area {
-        margin: 0 10px;
+        max-width: 600px;
+        margin: 0 auto;
+        width: 100%;
+    }
+}
+
+/* Small landscape devices */
+@media (max-height: 600px) and (orientation: landscape) {
+    .cooperative-layout .tile-pool {
+        min-height: 100px;
     }
 }
 

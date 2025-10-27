@@ -500,6 +500,17 @@ function attemptAction() {
         }
     });
     
+    // If extending, remove additional random tiles equal to new letters added
+    if (isExtension && poolTiles.length > 0) {
+        const tilesToRemove = Math.min(poolTiles.length, gameState.poolTiles.length);
+        for (let i = 0; i < tilesToRemove; i++) {
+            if (gameState.poolTiles.length > 0) {
+                const randomIndex = Math.floor(Math.random() * gameState.poolTiles.length);
+                gameState.poolTiles.splice(randomIndex, 1);
+            }
+        }
+    }
+    
     gameState.team.selectedTiles = [];
     
     gameState.poolTiles.forEach(tile => {
@@ -563,6 +574,28 @@ function updateScore() {
     document.getElementById('team-score').textContent = gameState.team.score;
 }
 
+// Clear selection
+function clearSelection() {
+    // Clear pool tile selections
+    gameState.poolTiles.forEach(tile => {
+        tile.selected = false;
+    });
+    
+    // Clear word tile selections
+    gameState.team.words.forEach(word => {
+        word.tiles.forEach(tile => {
+            tile.selected = false;
+        });
+    });
+    
+    // Clear selected tiles array
+    gameState.team.selectedTiles = [];
+    
+    renderPool();
+    renderTeamWords();
+    updatePreview();
+}
+
 // End game early
 function endGameEarly() {
     customConfirm('Are you sure you want to end the game?', (confirmed) => {
@@ -582,6 +615,14 @@ function loseGame() {
     
     const finalScore = gameState.team.score;
     
+    // Get and update session high score
+    const sessionHighScore = parseInt(sessionStorage.getItem('coopHighScore') || '0');
+    const isNewHighScore = finalScore > sessionHighScore;
+    if (isNewHighScore) {
+        sessionStorage.setItem('coopHighScore', finalScore.toString());
+    }
+    const displayHighScore = Math.max(finalScore, sessionHighScore);
+    
     const loseModal = document.createElement('div');
     loseModal.className = 'alert-modal-overlay';
     loseModal.style.display = 'flex';
@@ -597,6 +638,10 @@ function loseGame() {
                 <div style="margin-bottom: 15px;">Final Score:</div>
                 <div style="font-size: 32px; font-weight: 700; color: #121213;">
                     ${finalScore}
+                </div>
+                ${isNewHighScore ? '<div style="font-size: 14px; color: #538d4e; margin-top: 10px; font-weight: 600;"> NEW SESSION HIGH SCORE! </div>' : ''}
+                <div style="margin-top: 20px; font-size: 14px; color: #787c7e;">
+                    Session High Score: <span style="font-weight: 700; color: #121213;">${displayHighScore}</span>
                 </div>
             </div>
             <div style="display: flex; gap: 15px; justify-content: center;">
@@ -625,6 +670,14 @@ function endGame() {
     
     const finalScore = gameState.team.score;
     
+    // Get and update session high score
+    const sessionHighScore = parseInt(sessionStorage.getItem('coopHighScore') || '0');
+    const isNewHighScore = finalScore > sessionHighScore;
+    if (isNewHighScore) {
+        sessionStorage.setItem('coopHighScore', finalScore.toString());
+    }
+    const displayHighScore = Math.max(finalScore, sessionHighScore);
+    
     const endGameModal = document.createElement('div');
     endGameModal.className = 'alert-modal-overlay';
     endGameModal.style.display = 'flex';
@@ -637,6 +690,10 @@ function endGame() {
                 <div style="margin-bottom: 15px;">Score:</div>
                 <div style="font-size: 48px; font-weight: 700; color: #538d4e;">
                     ${finalScore}
+                </div>
+                ${isNewHighScore ? '<div style="font-size: 14px; color: #538d4e; margin-top: 10px; font-weight: 600;"> NEW SESSION HIGH SCORE! </div>' : ''}
+                <div style="margin-top: 20px; font-size: 14px; color: #787c7e;">
+                    Session High Score: <span style="font-weight: 700; color: #121213;">${displayHighScore}</span>
                 </div>
             </div>
             <div style="display: flex; gap: 15px; justify-content: center;">

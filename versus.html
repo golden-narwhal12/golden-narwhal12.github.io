@@ -16,6 +16,7 @@
                 <div class="time-bar">
                     <div class="time-bar-fill" id="timeBarFill"></div>
                 </div>
+                <div class="tile-counter" id="tileCounter">0/20</div>
             </div>
             
             <div class="game-content">
@@ -24,6 +25,7 @@
                     <div class="score">Score: <span id="player1-score">0</span></div>
                     <div class="player-collection">Collection</div>
                     <div class="word-list" id="player1-words"></div>
+                    <button class="clear-btn" onclick="clearSelection(1)" id="player1-clear">CLEAR</button>
                     <div class="selected-preview" id="player1-preview"></div>
                     <button class="create-btn" onclick="attemptAction(1)" id="player1-btn">GIVE WORD</button>
                 </div>
@@ -37,6 +39,7 @@
                     <div class="score">Score: <span id="player2-score">0</span></div>
                     <div class="player-collection">Collection</div>
                     <div class="word-list" id="player2-words"></div>
+                    <button class="clear-btn" onclick="clearSelection(2)" id="player2-clear">CLEAR</button>
                     <div class="selected-preview" id="player2-preview"></div>
                     <button class="create-btn" onclick="attemptAction(2)" id="player2-btn">GIVE WORD</button>
                 </div>

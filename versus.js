@@ -182,7 +182,7 @@ function showTutorial() {
         <p style="text-align: center; line-height: 1.7;">
             - This is an unconventional game in which <b>you are always looking to help your opponent.</b> At the end of the game, you want them to have more points than you. Players have to accept this paradoxical premise in order to play. It's okay to be confused, it makes the game more fun!
             - Suppose Player A sees the letters <i>R, E, A, T, D, O, S, I</i> in the pool. They might notice the word READ can be formed- <b>but they can only create it if their opponent says the word aloud.</b> So, player A will ask <b>one question</b> to player B, such as "What do you do to books?" If Player B says "READ" in their response, Player A can then create the word READ using the letters from the pool, giving player B the points for that word. 
-            - In this exchange, player A is interested in helping player B score points, and player B is naturally interested in answering player A's question. <b>The game only works if both plauyers are aligned with this goal.</b>
+            - In this exchange, player A is interested in helping player B score points, and player B is naturally interested in answering player A's question. <b>The game only works if both players are aligned with this goal.</b>
             - The strategy comes in when choosing which words to form. Players should try to form words that are easy for their opponent to say aloud in response to their question, while also trying to maximize the points they give to their opponent. <b>Longer words and words made later in the game are worth more points!</b>
             - Players can also <b>give tiles from their own words to their opponent</b> to help them form new words. To do this, players can click on tiles in their own words to select them, and then click the "GIVE WORD" button to give those tiles to their opponent.
             - The game continues until the timer runs out. <b>The player with the higher score at the end wins!</b>
@@ -223,12 +223,16 @@ function initializeGame() {
         addTileToPool();
     }
     
+    updateTileCounter();
     startGame();
 }
 
 // Add a random tile to the pool
 function addTileToPool() {
-    if (gameState.poolTiles.length >= gameState.settings.maxPool) return;
+    if (gameState.poolTiles.length >= gameState.settings.maxPool) {
+        loseGame();
+        return;
+    }
     if (letterBag.length === 0) {
         letterBag = createLetterBag();
     }
@@ -244,6 +248,27 @@ function addTileToPool() {
     });
     
     renderPool();
+    updateTileCounter();
+}
+
+// Update tile counter with color coding
+function updateTileCounter() {
+    const counter = document.getElementById('tileCounter');
+    const currentTiles = gameState.poolTiles.length;
+    const maxTiles = gameState.settings.maxPool;
+    
+    counter.textContent = `${currentTiles}/${maxTiles}`;
+    
+    counter.classList.remove('safe', 'warning', 'danger');
+    
+    const fillPercentage = currentTiles / maxTiles;
+    if (fillPercentage < 0.6) {
+        counter.classList.add('safe');
+    } else if (fillPercentage < 0.85) {
+        counter.classList.add('warning');
+    } else {
+        counter.classList.add('danger');
+    }
 }
 
 // Update game timer
@@ -314,11 +339,7 @@ function renderPool() {
         const tileDiv = document.createElement('div');
         tileDiv.className = 'game-tile';
         
-        if (tile.selectedBy.player1 && tile.selectedBy.player2) {
-            tileDiv.style.background = 'linear-gradient(135deg, #538d4e 50%, #c9b458 50%)';
-            tileDiv.style.color = 'white';
-            tileDiv.style.borderColor = '#121213';
-        } else if (tile.selectedBy.player1) {
+        if (tile.selectedBy.player1) {
             tileDiv.style.background = '#538d4e';
             tileDiv.style.color = 'white';
             tileDiv.style.borderColor = '#538d4e';
@@ -334,12 +355,14 @@ function renderPool() {
     });
 }
 
-// Toggle pool tile selection for both players
+// Toggle pool tile selection cycling through players
 function togglePoolTile(tileId) {
     const tile = gameState.poolTiles.find(t => t.id === tileId);
     if (!tile) return;
     
+    // Cycle: none -> player1 -> player2 -> none
     if (!tile.selectedBy.player1 && !tile.selectedBy.player2) {
+        // Select for player1
         tile.selectedBy.player1 = true;
         gameState.player1.selectedTiles.push({
             id: tileId,
@@ -347,6 +370,7 @@ function togglePoolTile(tileId) {
             source: 'pool'
         });
     } else if (tile.selectedBy.player1 && !tile.selectedBy.player2) {
+        // Switch from player1 to player2
         tile.selectedBy.player1 = false;
         tile.selectedBy.player2 = true;
         const index = gameState.player1.selectedTiles.findIndex(t => t.id === tileId && t.source === 'pool');
@@ -357,18 +381,9 @@ function togglePoolTile(tileId) {
             source: 'pool'
         });
     } else if (!tile.selectedBy.player1 && tile.selectedBy.player2) {
-        tile.selectedBy.player1 = true;
-        gameState.player1.selectedTiles.push({
-            id: tileId,
-            letter: tile.letter,
-            source: 'pool'
-        });
-    } else {
-        tile.selectedBy.player1 = false;
+        // Deselect from player2
         tile.selectedBy.player2 = false;
-        let index = gameState.player1.selectedTiles.findIndex(t => t.id === tileId && t.source === 'pool');
-        if (index > -1) gameState.player1.selectedTiles.splice(index, 1);
-        index = gameState.player2.selectedTiles.findIndex(t => t.id === tileId && t.source === 'pool');
+        const index = gameState.player2.selectedTiles.findIndex(t => t.id === tileId && t.source === 'pool');
         if (index > -1) gameState.player2.selectedTiles.splice(index, 1);
     }
     
@@ -539,6 +554,7 @@ function attemptAction(playerNum) {
     renderPlayerWords();
     updateScores();
     updatePreview(player);
+    updateTileCounter();
 }
 
 // Render player words
@@ -590,6 +606,89 @@ function renderPlayerWords() {
 function updateScores() {
     document.getElementById('player1-score').textContent = gameState.player1.score;
     document.getElementById('player2-score').textContent = gameState.player2.score;
+}
+
+// Clear selection for a specific player
+function clearSelection(playerNum) {
+    const player = 'player' + playerNum;
+    
+    // Clear pool tile selections
+    gameState.poolTiles.forEach(tile => {
+        if (tile.selectedBy[player]) {
+            tile.selectedBy[player] = false;
+        }
+    });
+    
+    // Clear word tile selections
+    gameState[player].words.forEach(word => {
+        word.tiles.forEach(tile => {
+            if (tile.selectedBy && tile.selectedBy[player]) {
+                tile.selectedBy[player] = false;
+            }
+        });
+    });
+    
+    // Clear selected tiles array
+    gameState[player].selectedTiles = [];
+    
+    renderPool();
+    renderPlayerWords();
+    updatePreview(player);
+}
+
+// Lose game due to tile overflow
+function loseGame() {
+    gameState.gameActive = false;
+    
+    clearInterval(gameState.timerInterval);
+    clearInterval(gameState.progressInterval);
+    clearTimeout(gameState.tileAddInterval);
+    
+    const winner = gameState.player1.score > gameState.player2.score ? 'PLAYER A' :
+                   gameState.player2.score > gameState.player1.score ? 'PLAYER B' : 'TIE';
+    
+    const loseModal = document.createElement('div');
+    loseModal.className = 'alert-modal-overlay';
+    loseModal.style.display = 'flex';
+    loseModal.innerHTML = `
+        <div class="alert-modal-content" style="text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #ff6b6b; letter-spacing: 0.1em;">
+                GAME OVER!
+            </div>
+            <div style="font-size: 16px; margin-bottom: 15px; color: #787c7e;">
+                The tile pool overflowed
+            </div>
+            <div style="font-size: 18px; margin-bottom: 30px; color: #121213;">
+                <div style="margin-bottom: 15px;">${winner === 'TIE' ? 'IT\'S A TIE!' : winner + ' WINS!'}</div>
+                <div style="display: flex; justify-content: space-around; max-width: 300px; margin: 0 auto;">
+                    <div>
+                        <div style="font-size: 14px; color: #787c7e; margin-bottom: 5px;">PLAYER A</div>
+                        <div style="font-size: 32px; font-weight: 700; color: ${gameState.player1.score > gameState.player2.score ? '#538d4e' : '#121213'};">
+                            ${gameState.player1.score}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 14px; color: #787c7e; margin-bottom: 5px;">PLAYER B</div>
+                        <div style="font-size: 32px; font-weight: 700; color: ${gameState.player2.score > gameState.player1.score ? '#538d4e' : '#121213'};">
+                            ${gameState.player2.score}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="alert-ok-btn" onclick="window.location.href='index.html'">MAIN MENU</button>
+                <button class="alert-ok-btn" style="background: #538d4e; border-color: #538d4e; color: white;" onclick="location.reload()">TRY AGAIN</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(loseModal);
+    
+    loseModal.addEventListener('click', (e) => {
+        if (e.target === loseModal) {
+            window.location.href = 'index.html';
+        }
+    });
 }
 
 // End game early
